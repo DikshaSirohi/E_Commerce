@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.id }} - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Account Menu</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action">
+                        Profile
+                    </a>
+                    <a href="{% url 'accounts:edit_profile' %}" class="list-group-item list-group-item-action">
+                        Edit Profile
+                    </a>
+                    <a href="{% url 'accounts:order_history' %}" class="list-group-item list-group-item-action">
+                        Order History
+                    </a>
+                    <a href="{% url 'cart:cart_detail' %}" class="list-group-item list-group-item-action">
+                        Shopping Cart
+                    </a>
+                    <a href="{% url 'accounts:logout' %}" class="list-group-item list-group-item-action text-danger">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Order #{{ order.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Order Information</h6>
+                            <p><strong>Order Date:</strong> {{ order.created|date:"M d, Y H:i" }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge badge-{% if order.paid %}success{% else %}warning{% endif %}">
+                                    {% if order.paid %}Paid{% else %}Pending{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Shipping Address</h6>
+                            <p>{{ order.first_name }} {{ order.last_name }}</p>
+                            <p>{{ order.address }}</p>
+                            <p>{{ order.city }}, {{ order.postal_code }}</p>
+                            <p>{{ order.country }}</p>
+                        </div>
+                    </div>
+                    
+                    <h6>Order Items</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>${{ item.price }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>${{ item.get_cost }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3">Total:</th>
+                                    <th>${{ order.get_total_cost }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'accounts:order_history' %}" class="btn btn-secondary">Back to Orders</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

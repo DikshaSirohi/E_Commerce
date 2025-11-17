@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load cart_filters %}
+
+{% block title %}Shopping Cart - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3>Shopping Cart</h3>
+        </div>
+        <div class="card-body">
+            {% if cart_items %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.product.image %}
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
+                                    {% else %}
+                                    <img src="https://via.placeholder.com/50x50" alt="{{ item.product.name }}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ item.product.name }}</h6>
+                                        <small class="text-muted">{{ item.product.category.name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if item.product.discount_price %}
+                                <span class="text-muted text-decoration-line-through">${{ item.product.price }}</span>
+                                <span class="text-danger">${{ item.product.discount_price }}</span>
+                                {% else %}
+                                ${{ item.product.price }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{% url 'cart:update_cart' item.id %}" method="post" class="d-flex align-items-center">
+                                    {% csrf_token %}
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" class="form-control form-control-sm" style="width: 70px;">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary ml-2">Update</button>
+                                </form>
+                            </td>
+                            <td>
+                                ${{ item|calculate_item_total }}
+                            </td>
+                            <td>
+                                <a href="{% url 'cart:remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger">Remove</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3">Total:</th>
+                            <th>
+                            {% if cart %}
+                            ${{ cart.get_total_price }}
+                            {% else %}
+                            $0.00
+                            {% endif %}
+                        </th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <a href="{% url 'shop:product_list' %}" class="btn btn-outline-primary">Continue Shopping</a>
+                    <a href="{% url 'cart:clear_cart' %}" class="btn btn-outline-danger">Clear Cart</a>
+                </div>
+                <div class="col-md-6 text-right">
+                    <a href="{% url 'checkout:checkout' %}" class="btn btn-primary btn-lg">Proceed to Checkout</a>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <h5>Your cart is empty</h5>
+                <p>Add some products to your cart to see them here.</p>
+                <a href="{% url 'shop:product_list' %}" class="btn btn-primary">Start Shopping</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

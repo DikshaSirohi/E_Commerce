@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'shop:product_list' %}">Products</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:product_list' %}?category={{ product.category.slug }}">{{ product.category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-0">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}" style="width: 100%; height: auto;">
+                    {% else %}
+                    <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="img-fluid" alt="{{ product.name }}" style="width: 100%; height: auto;">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="col-md-6">
+            <h1>{{ product.name }}</h1>
+            <div class="mb-3">
+                <span class="badge badge-secondary">{{ product.category.name }}</span>
+                {% if product.is_featured %}
+                <span class="badge badge-warning">Featured</span>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                {% if product.discount_price %}
+                <div class="d-flex align-items-center">
+                    <span class="product-discount-price h4 text-muted text-decoration-line-through">${{ product.price }}</span>
+                    <span class="product-price h2 ml-3">${{ product.discount_price }}</span>
+                    <span class="badge badge-success ml-2">Save ${{ product.price|add:product.discount_price|neg }}</span>
+                </div>
+                {% else %}
+                <span class="product-price h2">${{ product.price }}</span>
+                {% endif %}
+            </div>
+
+            <p class="lead">{{ product.description }}</p>
+
+            <div class="mb-4">
+                <h5>Availability:</h5>
+                {% if product.stock > 0 %}
+                <span class="text-success">In Stock ({{ product.stock }} available)</span>
+                {% else %}
+                <span class="text-danger">Out of Stock</span>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <form action="{% url 'cart:add_to_cart' product.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="quantity">Quantity:</label>
+                        <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="1" max="{{ product.stock }}" style="width: 100px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" {% if product.stock == 0 %}disabled{% endif %}>
+                        {% if product.stock > 0 %}Add to Cart{% else %}Out of Stock{% endif %}
+                    </button>
+                    <a href="{% url 'accounts:add_to_wishlist' product.id %}" class="btn btn-outline-primary btn-lg ml-2">
+                        <i class="fas fa-heart"></i> Add to Wishlist
+                    </a>
+                </form>
+            </div>
+
+            <div class="mb-4">
+                <h5>Product Details:</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Category:</strong> {{ product.category.name }}</li>
+                    <li><strong>SKU:</strong> {{ product.slug|upper }}</li>
+                    <li><strong>Stock:</strong> {{ product.stock }} units</li>
+                    {% if product.discount_price %}
+                    <li><strong>Discount:</strong> ${{ product.price|add:product.discount_price|neg }} off</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Reviews -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Customer Reviews</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Review Form -->
+                    {% if user.is_authenticated %}
+                    <div class="mb-4">
+                        <h6>Write a Review</h6>
+                        <form method="post" action="{% url 'shop:add_review' product.id %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="rating">Rating:</label>
+                                <select name="rating" id="rating" class="form-control" style="width: 150px;">
+                                    <option value="5">5 Stars</option>
+                                    <option value="4">4 Stars</option>
+                                    <option value="3">3 Stars</option>
+                                    <option value="2">2 Stars</option>
+                                    <option value="1">1 Star</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="content">Review:</label>
+                                <textarea name="content" id="content" class="form-control" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="mb-4">
+                        <p><a href="{% url 'accounts:login' %}">Login</a> to write a review.</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Existing Reviews -->
+                    {% for review in product.reviews.all %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">{{ review.user.username }}</h6>
+                            <small class="text-muted">{{ review.created|date:"M d, Y" }}</small>
+                        </div>
+                        <div class="mb-2">
+                            {% for i in review.rating|range %}
+                            <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                            {% for i in review.rating|range:5 %}
+                            <i class="far fa-star text-muted"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="mb-0">{{ review.content }}</p>
+                    </div>
+                    {% empty %}
+                    <p>No reviews yet. Be the first to review this product!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h2>Related Products</h2>
+            <div class="row">
+                {% for related_product in related_products %}
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="product-card">
+                        {% if related_product.image %}
+                        <img src="{{ related_product.image.url }}" class="card-img-top" alt="{{ related_product.name }}">
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="{{ related_product.name }}">
+                        {% endif %}
+                        <div class="product-card-body">
+                            <h6 class="product-title">{{ related_product.name }}</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if related_product.discount_price %}
+                                <span class="product-price">${{ related_product.discount_price }}</span>
+                                {% else %}
+                                <span class="product-price">${{ related_product.price }}</span>
+                                {% endif %}
+                                <a href="{% url 'shop:product_detail' related_product.slug %}" class="btn btn-outline-primary btn-sm">View</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

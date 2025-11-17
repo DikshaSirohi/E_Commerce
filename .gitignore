@@ -124,7 +124,7 @@ dmypy.json
 
 # Django media and static files
 /media/
-/static/
+# /static/  # Temporarily commented out for development
 
 # IDE
 .vscode/
